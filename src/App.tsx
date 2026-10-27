@@ -119,6 +119,130 @@ function MomoCharacter() {
   )
 }
 
+type CharacterId = 'shinchan' | 'doraemon' | 'ninja-hattori' | 'chhota-bheem'
+
+const characterAssets: Record<CharacterId, { name: string; happy: string; angry: string; icon: string }> = {
+  shinchan: { name: 'Shinchan', happy: '/characters/shinchan-happy.webp', angry: '/characters/shinchan-angry.webp', icon: '/characters/shinchan-icon.webp' },
+  doraemon: { name: 'Doraemon', happy: '/characters/doraemon-happy.webp', angry: '/characters/doraemon-angry.webp', icon: '/characters/doraemon-icon.webp' },
+  'ninja-hattori': { name: 'Ninja Hattori', happy: '/characters/ninja-hattori-happy.webp', angry: '/characters/ninja-hattori-angry.webp', icon: '/characters/ninja-hattori-icon.webp' },
+  'chhota-bheem': { name: 'Chhota Bheem', happy: '/characters/chhota-bheem-happy.webp', angry: '/characters/chhota-bheem-angry.webp', icon: '/characters/chhota-bheem-icon.webp' },
+}
+
+function CartoonCharacter({ mood, character }: { mood: 'happy' | 'angry'; character: CharacterId }) {
+  const [failedSources, setFailedSources] = useState<string[]>([])
+  const assets = characterAssets[character]
+  const activeSource = assets[mood]
+  const activeFailed = failedSources.includes(activeSource)
+
+  return (
+    <span className="shinchan-art" aria-hidden="true">
+      {!failedSources.includes(assets.happy) && (
+        <img
+          className={mood === 'happy' ? 'is-active' : ''}
+          src={assets.happy}
+          alt=""
+          draggable="false"
+          onError={() => setFailedSources((sources) => [...sources, assets.happy])}
+        />
+      )}
+      {!failedSources.includes(assets.angry) && (
+        <img
+          className={mood === 'angry' ? 'is-active' : ''}
+          src={assets.angry}
+          alt=""
+          draggable="false"
+          onError={() => setFailedSources((sources) => [...sources, assets.angry])}
+        />
+      )}
+      {activeFailed && <MomoCharacter />}
+    </span>
+  )
+}
+
+const memoryTracks = [
+  { id: 'shinchan', title: 'Shinchan', src: '/memory-lane/shinchan.mp3', cover: 'shinchan', mark: 'S' },
+  { id: 'doraemon', title: 'Doraemon', src: '/memory-lane/doraemon.mp3', cover: 'doraemon', mark: 'D' },
+  { id: 'ninja-hattori', title: 'Ninja Hattori', src: '/memory-lane/ninja-hattori.mp3', cover: 'hattori', mark: 'N' },
+  { id: 'chhota-bheem', title: 'Chhota Bheem', src: '/memory-lane/chhota-bheem.mp3', cover: 'bheem', mark: 'B' },
+]
+
+function MemoryLane({ selected, onSelect }: { selected: CharacterId; onSelect: (character: CharacterId) => void }) {
+  const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
+  const track = memoryTracks.find((item) => item.id === selected)!
+  const selectCharacter = (character: CharacterId) => {
+    onSelect(character)
+    setStatus('loading')
+  }
+
+  return (
+    <section className="memory-lane section-pad" aria-labelledby="memory-lane-title">
+      <div className="section-heading">
+        <span className="section-kicker">Press play on childhood</span>
+        <h2 id="memory-lane-title">A Little Trip Down Memory Lane</h2>
+        <p>A little piece of childhood, saved just for you.</p>
+      </div>
+      <div className="memory-track-grid">
+        {memoryTracks.map((item) => (
+          <button
+            className={`memory-track-card ${selected === item.id ? 'is-selected' : ''}`}
+            key={item.title}
+            onClick={() => selectCharacter(item.id as CharacterId)}
+            aria-pressed={selected === item.id}
+            aria-label={`Select ${item.title} childhood theme`}
+          >
+            <span className={`memory-track-cover cover-${item.cover}`}>
+              <span>{item.mark}</span>
+              <i aria-hidden="true">▶</i>
+            </span>
+            <strong>{item.title}</strong>
+            <small>{selected === item.id ? 'Selected' : 'Choose this memory'}</small>
+          </button>
+        ))}
+      </div>
+      <div className="memory-character-bar">
+        <div>
+          <span>Choose who roams the page</span>
+          <strong>{characterAssets[selected].name} is selected</strong>
+        </div>
+        <div className="memory-character-icons" role="group" aria-label="Choose the roaming cartoon character">
+          {memoryTracks.map((item) => (
+            <button
+              className={selected === item.id ? 'is-selected' : ''}
+              key={item.id}
+              onClick={() => selectCharacter(item.id as CharacterId)}
+              aria-pressed={selected === item.id}
+              aria-label={`Use ${item.title} across the page`}
+            >
+              <img src={characterAssets[item.id as CharacterId].icon} alt="" />
+              <span>{item.title}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="memory-player is-open" aria-live="polite">
+        <>
+            <div className="memory-player-copy">
+              <span>Now selected</span>
+              <strong>{track.title}</strong>
+              <small>{status === 'loading' ? 'Getting your memory ready…' : status === 'error' ? 'This track could not be loaded. Try another one.' : 'Use the controls whenever you are ready.'}</small>
+            </div>
+            <audio
+              key={track.src}
+              controls
+              preload="metadata"
+              src={track.src}
+              onLoadStart={() => setStatus('loading')}
+              onCanPlay={() => setStatus('ready')}
+              onError={() => setStatus('error')}
+            >
+              Your browser does not support audio playback.
+            </audio>
+        </>
+      </div>
+    </section>
+  )
+}
+
 type Question = { prompt: string; options: [string, string] }
 type QuestionSet = { id: number; startsAt: string; questions: Question[] }
 
@@ -288,6 +412,11 @@ function App() {
   const [pullingSnake, setPullingSnake] = useState(false)
   const [sitSeconds, setSitSeconds] = useState(0)
   const [characterEscaped, setCharacterEscaped] = useState(false)
+  const [characterMode, setCharacterMode] = useState<'normal' | 'rage'>('normal')
+  const [rageIntensity, setRageIntensity] = useState(0)
+  const [rageReaction, setRageReaction] = useState(0)
+  const [rageBursts, setRageBursts] = useState<Array<{ id: string; intensity: number }>>([])
+  const [selectedCharacter, setSelectedCharacter] = useState<CharacterId>('shinchan')
   const [coupleGame, setCoupleGame] = useState<'tic' | 'rather' | null>(null)
   const [loveReactions, setLoveReactions] = useState<Array<{
     id: string
@@ -303,7 +432,7 @@ function App() {
   const bigHeartRef = useRef<HTMLButtonElement>(null)
   const fireHeartRef = useRef<HTMLButtonElement>(null)
   const escapedCharacterRef = useRef<HTMLButtonElement>(null)
-  const lastShinchanLove = useRef(0)
+  const collisionInsideRef = useRef(false)
   const [mood, setMood] = useState<'happy' | 'angry'>('happy')
   const [breathing, setBreathing] = useState(false)
   const [breathPhase, setBreathPhase] = useState(0)
@@ -311,6 +440,15 @@ function App() {
   const [comfortChoice, setComfortChoice] = useState('')
   const [danceBurst, setDanceBurst] = useState(0)
   const [readingPromptIndex, setReadingPromptIndex] = useState(-1)
+
+  useEffect(() => {
+    const preload = Object.values(characterAssets).flatMap((character) => [character.happy, character.angry, character.icon])
+    preload.forEach((src) => {
+      const image = new Image()
+      image.src = src
+      image.decode?.().catch(() => undefined)
+    })
+  }, [])
 
   useEffect(() => {
     try {
@@ -360,7 +498,7 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (sitSeconds <= 0) return
+    if (sitSeconds <= 0 || characterMode === 'rage') return
     const timer = window.setInterval(() => {
       setSitSeconds((seconds) => {
         if (seconds <= 1) {
@@ -371,14 +509,20 @@ function App() {
       })
     }, 1000)
     return () => window.clearInterval(timer)
-  }, [sitSeconds > 0])
+  }, [sitSeconds > 0, characterMode])
 
   useEffect(() => {
     const escapeTimer = window.setTimeout(() => {
-      if (sitSeconds === 0) setCharacterEscaped(true)
+      if (sitSeconds === 0 && characterMode === 'normal') setCharacterEscaped(true)
     }, 4500)
     return () => window.clearTimeout(escapeTimer)
-  }, [])
+  }, [characterMode])
+
+  useEffect(() => {
+    if (!rageIntensity) return
+    const decay = window.setTimeout(() => setRageIntensity((value) => Math.max(0, value - 1)), 1800)
+    return () => window.clearTimeout(decay)
+  }, [rageIntensity, rageReaction])
 
   const addPhotos = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []).slice(0, 5 - photos.length)
@@ -446,8 +590,45 @@ function App() {
   }
 
   const tapCharacter = () => {
+    if (characterMode === 'rage') {
+      const burstId = `rage-${Date.now()}-${Math.random()}`
+      setRageIntensity((value) => {
+        const intensity = Math.min(3, value + 1)
+        setRageBursts((bursts) => [...bursts.slice(-2), { id: burstId, intensity }])
+        return intensity
+      })
+      setRageReaction((value) => value + 1)
+      window.setTimeout(() => {
+        setRageBursts((bursts) => bursts.filter((burst) => burst.id !== burstId))
+      }, 3100)
+      return
+    }
     setSitSeconds((seconds) => seconds + 10)
     setCharacterEscaped(false)
+  }
+
+  const chooseMood = (nextMood: 'happy' | 'angry') => {
+    setMood(nextMood)
+    if (nextMood === 'happy') {
+      setCharacterMode('normal')
+      setRageIntensity(0)
+      setRageReaction(0)
+      setRageBursts([])
+    }
+  }
+
+  const chooseCharacterMode = (nextMode: 'normal' | 'rage') => {
+    if (nextMode === 'rage' && mood !== 'angry') return
+    setCharacterMode(nextMode)
+    setRageIntensity(0)
+    setRageReaction(0)
+    setRageBursts([])
+    if (nextMode === 'rage') {
+      setCharacterEscaped(false)
+      setSitSeconds(0)
+    } else {
+      setCharacterEscaped(true)
+    }
   }
 
   const sendLove = () => {
@@ -487,33 +668,63 @@ function App() {
   }
 
   useEffect(() => {
-    if (!characterEscaped) return
+    if (!characterEscaped || characterMode !== 'normal') return
+
+    const target = mood === 'happy' ? bigHeartRef.current : fireHeartRef.current
+    if (!target) return
+
     let frame = 0
-    let pauseTimer = 0
-    const watchCrossing = () => {
-      const character = escapedCharacterRef.current?.getBoundingClientRect()
-      const target = (mood === 'happy' ? bigHeartRef.current : fireHeartRef.current)?.getBoundingClientRect()
-      const targetIsVisible = target && target.bottom > 0 && target.top < window.innerHeight
-      const crossesTarget = character && target
-        && character.left < target.right
-        && character.right > target.left
-        && character.top < target.bottom
-        && character.bottom > target.top
-      if (targetIsVisible && crossesTarget && Date.now() - lastShinchanLove.current > 5000) {
-        lastShinchanLove.current = Date.now()
-        setShinchanSendingLove(true)
-        if (mood === 'happy') sendLove()
-        else sendPositiveSpark()
-        pauseTimer = window.setTimeout(() => setShinchanSendingLove(false), 1000)
+    let reactionTimer = 0
+    let lastCheck = 0
+    let targetIsVisible = false
+    collisionInsideRef.current = false
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        targetIsVisible = entry.isIntersecting
+        if (!targetIsVisible) collisionInsideRef.current = false
+      },
+      { threshold: 0 },
+    )
+    observer.observe(target)
+
+    const watchPerimeter = (time: number) => {
+      if (targetIsVisible && time - lastCheck >= 70) {
+        lastCheck = time
+        const character = escapedCharacterRef.current?.getBoundingClientRect()
+        const targetBounds = target.getBoundingClientRect()
+        const perimeter = 8
+        const isTouching = Boolean(
+          character
+          && character.left <= targetBounds.right + perimeter
+          && character.right >= targetBounds.left - perimeter
+          && character.top <= targetBounds.bottom + perimeter
+          && character.bottom >= targetBounds.top - perimeter,
+        )
+
+        if (isTouching && !collisionInsideRef.current) {
+          collisionInsideRef.current = true
+          setShinchanSendingLove(true)
+          if (mood === 'happy') sendLove()
+          else sendPositiveSpark()
+          window.clearTimeout(reactionTimer)
+          reactionTimer = window.setTimeout(() => setShinchanSendingLove(false), 900)
+        } else if (!isTouching) {
+          collisionInsideRef.current = false
+        }
       }
-      frame = window.requestAnimationFrame(watchCrossing)
+      frame = window.requestAnimationFrame(watchPerimeter)
     }
-    frame = window.requestAnimationFrame(watchCrossing)
+
+    frame = window.requestAnimationFrame(watchPerimeter)
     return () => {
+      observer.disconnect()
       window.cancelAnimationFrame(frame)
-      window.clearTimeout(pauseTimer)
+      window.clearTimeout(reactionTimer)
+      collisionInsideRef.current = false
+      setShinchanSendingLove(false)
     }
-  }, [characterEscaped, mood])
+  }, [characterEscaped, characterMode, mood])
 
   useEffect(() => {
     if (!breathing) {
@@ -536,10 +747,9 @@ function App() {
           <a href={mood === 'happy' ? '#memories' : '#quiet-corner'}>{mood === 'happy' ? 'our memories' : 'quiet corner'}</a>
           <a href="#play">play a little</a>
         </div>
-        <div className={`mood-switch ${mood === 'angry' ? 'is-angry' : ''}`} aria-label="Choose page mood">
-          <span aria-hidden="true">{mood === 'happy' ? <Heart /> : '🔥'}</span>
-          <button onClick={() => setMood('happy')} aria-label="Switch to happy mode" title="Happy mode" />
-          <button onClick={() => setMood('angry')} aria-label="Switch to angry or quiet mode" title="I need quiet mode" />
+        <div className="mood-switch" role="group" aria-label="Choose page mood">
+          <button className={mood === 'happy' ? 'is-active' : ''} onClick={() => chooseMood('happy')} aria-pressed={mood === 'happy'} title="Love mode"><Heart /></button>
+          <button className={mood === 'angry' ? 'is-active' : ''} onClick={() => chooseMood('angry')} aria-pressed={mood === 'angry'} title="Fire mode"><span aria-hidden="true">🔥</span></button>
         </div>
       </nav>
 
@@ -933,33 +1143,69 @@ function App() {
           <article className="game-card pixel-game">
             <span className="game-label">Game six</span>
             <h3>Make Momo sit still</h3>
-            <p>Tap the wiggly pixel pal. Every tap adds 10 seconds of quiet chair time.</p>
+            <p>{characterMode === 'rage' ? 'Tap the grumpy sitter for a harmless burst of cartoon stars.' : 'Tap the wiggly pal. Every tap adds 10 seconds of quiet chair time.'}</p>
+            <div className={`character-mode-switch ${mood === 'happy' ? 'is-single' : ''}`} role="group" aria-label="Choose Shinchan behavior">
+              <button className={characterMode === 'normal' ? 'is-active' : ''} onClick={() => chooseCharacterMode('normal')} aria-pressed={characterMode === 'normal'}>Normal Mode</button>
+              {mood === 'angry' && (
+                <button className={characterMode === 'rage' ? 'is-active' : ''} onClick={() => chooseCharacterMode('rage')} aria-pressed={characterMode === 'rage'} title="Keep Shinchan seated in Rage Mode">Rage Mode</button>
+              )}
+            </div>
             <div className="pixel-room">
               <div className="pixel-chair"><span /><i /></div>
+              {characterMode === 'rage' && rageBursts.length > 0 && (
+                <span className="rage-effects-field" aria-hidden="true">
+                  {rageBursts.map((burst, burstIndex) => (
+                    <span className={`rage-burst rage-level-${burst.intensity}`} key={burst.id}>
+                      {Array.from({ length: 2 + burst.intensity * 2 }, (_, index) => (
+                        <i
+                          className="rage-star"
+                          key={`star-${index}`}
+                          style={{
+                            '--rage-x': `${((index * 29 + burstIndex * 13) % 82) - 41}px`,
+                            '--rage-y': `${12 + (index % 3) * 9}px`,
+                            '--rage-delay': `${(index % 3) * 0.1}s`,
+                            '--rage-scale': `${0.65 + (index % 3) * 0.16}`,
+                          } as CSSProperties}
+                        >★</i>
+                      ))}
+                      {Array.from({ length: Math.min(2, burst.intensity) }, (_, index) => (
+                        <i
+                          className="rage-ring"
+                          key={`ring-${index}`}
+                          style={{
+                            '--rage-x': `${(index - 1) * 8}px`,
+                            '--rage-delay': `${index * 0.12}s`,
+                          } as CSSProperties}
+                        />
+                      ))}
+                    </span>
+                  ))}
+                </span>
+              )}
               {!characterEscaped && (
                 <button
-                  className={`pixel-character ${sitSeconds > 0 ? 'is-sitting' : ''}`}
+                  className={`pixel-character ${sitSeconds > 0 || characterMode === 'rage' ? 'is-sitting' : ''} ${characterMode === 'rage' ? `is-raging rage-level-${rageIntensity}` : ''}`}
                   onClick={tapCharacter}
-                  aria-label="Tap Momo to add ten seconds of sitting time"
+                  aria-label={characterMode === 'rage' ? 'Tap angry Shinchan for a cartoon reaction' : 'Tap Shinchan to add ten seconds of sitting time'}
                 >
-                  <MomoCharacter />
+                  <CartoonCharacter mood={mood} character={selectedCharacter} />
                 </button>
               )}
-              <span className="room-note">{characterEscaped ? 'Oh! Momo escaped the card…' : sitSeconds > 0 ? 'Such a good sitter.' : 'Quick, tap Momo!'}</span>
+              <span className="room-note">{characterMode === 'rage' ? 'All fury, safely parked on the chair.' : characterEscaped ? 'Oh! Momo escaped the card…' : sitSeconds > 0 ? 'Such a good sitter.' : 'Quick, tap Momo!'}</span>
             </div>
-            {characterEscaped && (
+            {characterEscaped && characterMode === 'normal' && (
               <button
                 ref={escapedCharacterRef}
                 className={`pixel-character escaped-character ${shinchanSendingLove ? 'is-sending-love' : ''}`}
                 onClick={tapCharacter}
                 aria-label="Catch Momo and add ten seconds of sitting time"
               >
-                <MomoCharacter />
+                <CartoonCharacter mood={mood} character={selectedCharacter} />
               </button>
             )}
             <div className="sit-counter" aria-live="polite">
-              <strong>{sitSeconds}s</strong>
-              <span>{sitSeconds > 0 ? 'banked chair time' : 'Catch Momo before they roam away!'}</span>
+              <strong>{characterMode === 'rage' ? `${rageIntensity}/3` : `${sitSeconds}s`}</strong>
+              <span>{characterMode === 'rage' ? 'cartoon rage level' : sitSeconds > 0 ? 'banked chair time' : 'Catch Momo before they roam away!'}</span>
             </div>
           </article>
 
@@ -980,6 +1226,8 @@ function App() {
           </article>
         </div>
       </section>
+
+      <MemoryLane selected={selectedCharacter} onSelect={setSelectedCharacter} />
 
       <div className="love-reaction-stream" aria-live="polite" aria-atomic="false">
         {loveReactions.map((reaction) => (
