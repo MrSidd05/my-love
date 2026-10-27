@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useMemo, useState } from 'react'
+import { ChangeEvent, CSSProperties, useEffect, useMemo, useRef, useState } from 'react'
 
 const starterPhotos = [
   {
@@ -87,6 +87,156 @@ function MomoCharacter() {
   )
 }
 
+type Question = { prompt: string; options: [string, string] }
+type QuestionSet = { id: number; startsAt: string; questions: Question[] }
+
+const questionBank: Question[] = [
+  { prompt: 'Your perfect slow morning starts with…', options: ['Coffee and conversation', 'Sleeping in together'] },
+  { prompt: 'Which surprise would make you smile more?', options: ['A handwritten note', 'A spontaneous day trip'] },
+  { prompt: 'Pick our next date-night mood.', options: ['Dressed-up dinner', 'Cozy movie marathon'] },
+  { prompt: 'When you need cheering up, you prefer…', options: ['A long hug', 'Something that makes you laugh'] },
+  { prompt: 'Which home sounds more like us?', options: ['A city apartment', 'A quiet cottage'] },
+  { prompt: 'Choose a shared superpower.', options: ['Read each other’s minds', 'Pause time together'] },
+  { prompt: 'For a free weekend, should we…', options: ['Explore somewhere new', 'Stay home with no plans'] },
+  { prompt: 'Which memory is more fun to make?', options: ['A beautiful photo', 'An inside joke'] },
+  { prompt: 'Pick a midnight snack.', options: ['Something sweet', 'Something salty'] },
+  { prompt: 'What matters more on a trip?', options: ['A perfect plan', 'Room for surprises'] },
+  { prompt: 'Our ideal celebration is…', options: ['A big party', 'Just the two of us'] },
+  { prompt: 'Which gift feels more meaningful?', options: ['Something handmade', 'An experience together'] },
+  { prompt: 'Choose a view for our dream holiday.', options: ['Mountains', 'Ocean'] },
+  { prompt: 'On a rainy day, would you rather…', options: ['Cook something new', 'Watch an old favorite'] },
+  { prompt: 'Which compliment means more?', options: ['You understand me', 'You inspire me'] },
+  { prompt: 'Pick an adventure pace.', options: ['Wake up at sunrise', 'Stay out after midnight'] },
+  { prompt: 'Would you rather always share…', options: ['Dessert', 'The playlist'] },
+  { prompt: 'Which little ritual should we keep?', options: ['Good-morning messages', 'Good-night calls'] },
+  { prompt: 'Choose our game-night energy.', options: ['Friendly competition', 'Teamwork all the way'] },
+  { prompt: 'What makes a place feel like home?', options: ['Familiar routines', 'The person beside you'] },
+  { prompt: 'Would you rather revisit…', options: ['Our first date', 'Our funniest day'] },
+  { prompt: 'Pick a class to take together.', options: ['Dancing', 'Cooking'] },
+  { prompt: 'For one year, would you choose…', options: ['A new city every month', 'One beautiful home base'] },
+  { prompt: 'Which conversation do you enjoy more?', options: ['Dreams about the future', 'Stories from the past'] },
+  { prompt: 'Choose a tiny everyday luxury.', options: ['Breakfast in bed', 'An evening walk'] },
+  { prompt: 'Which pet matches our energy?', options: ['Playful dog', 'Calm cat'] },
+  { prompt: 'Would you rather be known as…', options: ['The adventurous couple', 'The thoughtful couple'] },
+  { prompt: 'Pick a shared keepsake.', options: ['A photo album', 'A memory box'] },
+  { prompt: 'What would you rather plan next?', options: ['A big goal', 'A little tradition'] },
+  { prompt: 'Choose a soundtrack for us.', options: ['Soft acoustic songs', 'Songs we dance to'] },
+  { prompt: 'At a new restaurant, do we…', options: ['Order our own favorites', 'Share everything'] },
+  { prompt: 'Which season feels most romantic?', options: ['Golden autumn', 'Bright summer'] },
+  { prompt: 'Would you rather receive…', options: ['Flowers for no reason', 'Your favorite treat'] },
+  { prompt: 'Pick our dream road-trip rule.', options: ['Follow the map', 'Take every interesting turn'] },
+  { prompt: 'Which promise feels sweetest?', options: ['I’ll always listen', 'I’ll always show up'] },
+  { prompt: 'Choose our Sunday afternoon.', options: ['Visit a market', 'Take a long nap'] },
+  { prompt: 'Would you rather master…', options: ['A language together', 'An instrument together'] },
+  { prompt: 'Which is more romantic?', options: ['A grand gesture', 'Small daily kindnesses'] },
+  { prompt: 'Pick a place for a deep talk.', options: ['Under the stars', 'On a long drive'] },
+  { prompt: 'What should we collect?', options: ['Postcards from trips', 'Recipes we love'] },
+]
+
+function currentQuestionSet(): QuestionSet {
+  const epoch = new Date('2026-10-27T00:00:00Z').getTime()
+  const cycle = 10 * 86400000
+  const id = Math.max(0, Math.floor((Date.now() - epoch) / cycle))
+  const offset = (id * 20) % questionBank.length
+  return {
+    id,
+    startsAt: new Date(epoch + id * cycle).toISOString(),
+    questions: Array.from({ length: 20 }, (_, index) => questionBank[(offset + index) % questionBank.length]),
+  }
+}
+
+function TicTacToe({ close }: { close: () => void }) {
+  const [board, setBoard] = useState<Array<'X' | 'O' | null>>(Array(9).fill(null))
+  const [turn, setTurn] = useState<'X' | 'O'>('X')
+  const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]
+  const win = lines.find(([a,b,c]) => board[a] && board[a] === board[b] && board[a] === board[c])
+  const done = Boolean(win) || board.every(Boolean)
+  const play = (index: number) => {
+    if (done || board[index]) return
+    const next = [...board]
+    next[index] = turn
+    setBoard(next)
+    setTurn(turn === 'X' ? 'O' : 'X')
+  }
+  const reset = () => { setBoard(Array(9).fill(null)); setTurn('X') }
+  return (
+    <div className="couple-game-modal" role="dialog" aria-modal="true" aria-label="Tic Tac Toe">
+      <button className="couple-close" onClick={close} aria-label="Close game">×</button>
+      <span className="section-kicker">Pass-and-play</span>
+      <h2>Tic Tac Toe</h2>
+      <p>{done ? win ? `Player ${board[win[0]] === 'X' ? '1' : '2'} wins!` : 'A perfect draw!' : `Player ${turn === 'X' ? '1' : '2'}, choose a square.`}</p>
+      <div className="couple-turns"><span className={turn === 'X' && !done ? 'active' : ''}>Player 1 ×</span><span className={turn === 'O' && !done ? 'active' : ''}>Player 2 ○</span></div>
+      <div className="couple-tic-board">
+        {board.map((cell, index) => <button key={index} onClick={() => play(index)} disabled={Boolean(cell) || done} aria-label={`Square ${index + 1}`}>{cell === 'X' ? '×' : cell === 'O' ? '○' : ''}</button>)}
+      </div>
+      {done && <button className="couple-action" onClick={reset}>Play another round</button>}
+    </div>
+  )
+}
+
+function WouldRather({ close }: { close: () => void }) {
+  const fresh = useMemo(currentQuestionSet, [])
+  const [savedSets] = useState<QuestionSet[]>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('pooky-question-sets') || '[]') as QuestionSet[]
+      const next = saved.some(set => set.id === fresh.id) ? saved : [...saved, fresh]
+      localStorage.setItem('pooky-question-sets', JSON.stringify(next))
+      return next
+    } catch { return [fresh] }
+  })
+  const [set, setSet] = useState(fresh)
+  const [index, setIndex] = useState(0)
+  const [player, setPlayer] = useState<1 | 2 | 3>(1)
+  const [first, setFirst] = useState<number | null>(null)
+  const [second, setSecond] = useState<number | null>(null)
+  const [score, setScore] = useState(0)
+  const [opened, setOpened] = useState(false)
+  const question = set.questions[index]
+  const finished = index === 19 && player === 3
+  const answer = (choice: number) => {
+    if (player === 1) { setFirst(choice); setPlayer(2) }
+    else { setSecond(choice); if (choice === first) setScore(value => value + 1); setPlayer(3) }
+  }
+  const restartSet = (chosen: QuestionSet) => { setSet(chosen); setIndex(0); setPlayer(1); setFirst(null); setSecond(null); setScore(0); setOpened(false) }
+  const next = () => { setIndex(value => value + 1); setPlayer(1); setFirst(null); setSecond(null) }
+  const rose = score > 18 ? 'red' : score > 12 ? 'orange' : score > 10 ? 'yellow' : ''
+  const days = Math.max(0, Math.ceil((new Date(fresh.startsAt).getTime() + 10 * 86400000 - Date.now()) / 86400000))
+  return (
+    <div className="couple-game-modal rather-modal" role="dialog" aria-modal="true" aria-label="Would You Rather">
+      <button className="couple-close" onClick={close} aria-label="Close game">×</button>
+      {finished ? (
+        <div className="couple-finale">
+          <span className="section-kicker">20 questions complete</span>
+          <h2>{score} matching answers</h2>
+          <p>{score > 10 ? 'There is a little something waiting for both of you.' : 'Different answers make the best conversations. Keep discovering each other.'}</p>
+          {score > 10 && <button className={`reward-envelope ${opened ? 'open' : ''}`} onClick={() => setOpened(true)}>{opened ? <><b className={`reward-rose ${rose}`}>✿</b><strong>{rose} rose</strong></> : <><span /><strong>Open together</strong></>}</button>}
+          <button className="couple-action" onClick={() => restartSet(set)}>Play this set again</button>
+        </div>
+      ) : player === 3 ? (
+        <div className="couple-reveal">
+          <span className="section-kicker">{first === second ? 'A match!' : 'Two points of view'}</span>
+          <h2>{first === second ? 'Same wavelength.' : 'More to talk about.'}</h2>
+          <div><span>Player 1<strong>{question.options[first!]}</strong></span><span>Player 2<strong>{question.options[second!]}</strong></span></div>
+          <p>{first === second ? '+1 point for thinking alike.' : 'No points lost—differences are discoveries.'}</p>
+          <button className="couple-action" onClick={next}>{index === 19 ? 'See our reward' : 'Next question'}</button>
+        </div>
+      ) : (
+        <>
+          <div className="rather-status"><span>Question {index + 1} / 20</span><span>Matches {score}</span></div>
+          <span className="section-kicker">Player {player} chooses privately</span>
+          <h2>{question.prompt}</h2>
+          <div className="rather-options">{question.options.map((option, choice) => <button key={option} onClick={() => answer(choice)}><span>{choice ? 'B' : 'A'}</span>{option}</button>)}</div>
+          <p>Choose honestly, then pass the screen to {player === 1 ? 'Player 2' : 'your partner'}.</p>
+        </>
+      )}
+      <div className="question-archive">
+        <span>New questions in {days} day{days === 1 ? '' : 's'} · Refreshes every 10 days</span>
+        {savedSets.length > 1 && <div>{savedSets.map(item => <button key={item.id} onClick={() => restartSet(item)}>Set {item.id + 1}</button>)}</div>}
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [photos, setPhotos] = useState<string[]>([])
   const [hostedPhotos, setHostedPhotos] = useState<string[]>([])
@@ -106,6 +256,20 @@ function App() {
   const [pullingSnake, setPullingSnake] = useState(false)
   const [sitSeconds, setSitSeconds] = useState(0)
   const [characterEscaped, setCharacterEscaped] = useState(false)
+  const [coupleGame, setCoupleGame] = useState<'tic' | 'rather' | null>(null)
+  const [loveReactions, setLoveReactions] = useState<Array<{
+    id: string
+    kind: 'heart' | 'message'
+    x: number
+    drift: number
+    delay: number
+    duration: number
+    size: number
+  }>>([])
+  const [shinchanSendingLove, setShinchanSendingLove] = useState(false)
+  const bigHeartRef = useRef<HTMLButtonElement>(null)
+  const escapedCharacterRef = useRef<HTMLButtonElement>(null)
+  const lastShinchanLove = useRef(0)
 
   useEffect(() => {
     try {
@@ -245,6 +409,51 @@ function App() {
     setCharacterEscaped(false)
   }
 
+  const sendLove = () => {
+    const burstId = `${Date.now()}-${Math.random()}`
+    const reactions = Array.from({ length: 16 }, (_, index) => ({
+      id: `${burstId}-${index}`,
+      kind: (index % 4 === 0 ? 'message' : 'heart') as 'heart' | 'message',
+      x: 5 + Math.random() * 90,
+      drift: Math.round(Math.random() * 150 - 75),
+      delay: Math.random() * 1.4,
+      duration: 6.8 + Math.random() * 2.2,
+      size: 15 + Math.round(Math.random() * 18),
+    }))
+    setLoveReactions((items) => [...items.slice(-120), ...reactions])
+    window.setTimeout(() => {
+      setLoveReactions((items) => items.filter((item) => !item.id.startsWith(burstId)))
+    }, 10600)
+  }
+
+  useEffect(() => {
+    if (!characterEscaped) return
+    let frame = 0
+    let pauseTimer = 0
+    const watchCrossing = () => {
+      const character = escapedCharacterRef.current?.getBoundingClientRect()
+      const heart = bigHeartRef.current?.getBoundingClientRect()
+      const heartIsVisible = heart && heart.bottom > 0 && heart.top < window.innerHeight
+      const crossesHeart = character && heart
+        && character.left < heart.right
+        && character.right > heart.left
+        && character.top < heart.bottom
+        && character.bottom > heart.top
+      if (heartIsVisible && crossesHeart && Date.now() - lastShinchanLove.current > 5000) {
+        lastShinchanLove.current = Date.now()
+        setShinchanSendingLove(true)
+        sendLove()
+        pauseTimer = window.setTimeout(() => setShinchanSendingLove(false), 1000)
+      }
+      frame = window.requestAnimationFrame(watchCrossing)
+    }
+    frame = window.requestAnimationFrame(watchCrossing)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.clearTimeout(pauseTimer)
+    }
+  }, [characterEscaped])
+
   return (
     <main>
       <nav className="nav-shell" aria-label="Main navigation">
@@ -273,7 +482,14 @@ function App() {
         </div>
         <div className="hero-art" aria-label="A hand-drawn bouquet of hearts">
           <span className="doodle doodle-one">you + me</span>
-          <div className="big-heart"><Heart /></div>
+          <button
+            ref={bigHeartRef}
+            className={`big-heart ${shinchanSendingLove ? 'shinchan-love' : ''}`}
+            onClick={sendLove}
+            aria-label="Send an I love you reaction"
+          >
+            <Heart />
+          </button>
           <span className="small-heart small-one"><Heart /></span>
           <span className="small-heart small-two"><Heart /></span>
           <span className="small-heart small-three"><Heart /></span>
@@ -579,7 +795,8 @@ function App() {
             </div>
             {characterEscaped && (
               <button
-                className="pixel-character escaped-character"
+                ref={escapedCharacterRef}
+                className={`pixel-character escaped-character ${shinchanSendingLove ? 'is-sending-love' : ''}`}
                 onClick={tapCharacter}
                 aria-label="Catch Momo and add ten seconds of sitting time"
               >
@@ -591,8 +808,53 @@ function App() {
               <span>{sitSeconds > 0 ? 'banked chair time' : 'Catch Momo before they roam away!'}</span>
             </div>
           </article>
+
+          <article className="game-card new-couple-game">
+            <span className="game-label">Game seven · Two players</span>
+            <h3>Tic Tac Toe together</h3>
+            <p>Take turns, claim your squares, and see who gets three in a row first.</p>
+            <div className="tic-preview" aria-hidden="true">{Array.from({ length: 9 }, (_, index) => <span key={index}>{index === 1 || index === 6 ? '×' : index === 4 || index === 8 ? '○' : ''}</span>)}</div>
+            <button className="launch-couple-game" onClick={() => setCoupleGame('tic')}>Start a match</button>
+          </article>
+
+          <article className="game-card new-couple-game rather-preview-card">
+            <span className="game-label">Game eight · 20 questions</span>
+            <h3>Would you rather?</h3>
+            <p>Choose in secret, compare your answers, and discover how often your minds meet.</p>
+            <div className="choice-preview" aria-hidden="true"><span>A</span><i>or</i><span>B</span></div>
+            <button className="launch-couple-game" onClick={() => setCoupleGame('rather')}>Play this question set</button>
+          </article>
         </div>
       </section>
+
+      <div className="love-reaction-stream" aria-live="polite" aria-atomic="false">
+        {loveReactions.map((reaction) => (
+          <span
+            className={`love-particle love-particle-${reaction.kind}`}
+            key={reaction.id}
+            style={{
+              '--love-x': `${reaction.x}vw`,
+              '--love-drift': `${reaction.drift}px`,
+              '--love-delay': `${reaction.delay}s`,
+              '--love-duration': `${reaction.duration}s`,
+              '--love-size': `${reaction.size}px`,
+            } as CSSProperties}
+          >
+            {reaction.kind === 'heart' ? <Heart /> : 'I love you'}
+          </span>
+        ))}
+      </div>
+
+      <div
+        className={`couple-game-overlay ${coupleGame ? 'is-open' : ''}`}
+        aria-hidden={!coupleGame}
+        onMouseDown={(event) => { if (event.target === event.currentTarget) setCoupleGame(null) }}
+      >
+        {coupleGame === 'tic' && <TicTacToe close={() => setCoupleGame(null)} />}
+        <div className={`stored-couple-game ${coupleGame === 'rather' ? 'is-active' : ''}`}>
+          <WouldRather close={() => setCoupleGame(null)} />
+        </div>
+      </div>
 
       <footer>
         <Heart />

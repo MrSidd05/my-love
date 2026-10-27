@@ -1,11 +1,5 @@
-
 {
-  "title": "My Love ❤️",
-  "description": "A loving, playful website made with love for Ishika, featuring encouraging messages, a photo gallery, and simple games to brighten her day and celebrate family love.",
-  "language": "en",
-  "icons": {
-    "icon": "/favicon.svg"
-  },
+  "description": "A couples’ game app featuring turn-based tic-tac-toe and 20-question Would You Rather challenges to spark connection, earn rose rewards, and revisit past sets.",
   "robots": {
     "index": false
   },
