@@ -39,6 +39,14 @@ const fortunes = [
   'Tonight calls for a blanket, a comfort movie, and absolutely no worries.',
 ]
 
+const mazeLevels = [
+  { size: 4, path: [0, 1, 2, 6, 10, 9, 13, 14, 15] },
+  { size: 5, path: [0, 5, 10, 11, 6, 7, 8, 13, 18, 17, 22, 23, 24] },
+  { size: 6, path: [0, 1, 7, 13, 12, 18, 24, 25, 26, 20, 14, 15, 16, 22, 28, 29, 35] },
+  { size: 7, path: [0, 7, 14, 15, 8, 9, 10, 17, 24, 23, 30, 37, 38, 39, 32, 25, 26, 27, 34, 41, 48] },
+  { size: 8, path: [0, 1, 9, 17, 16, 24, 32, 33, 34, 26, 18, 19, 20, 28, 36, 44, 43, 51, 59, 60, 52, 53, 54, 46, 38, 39, 47, 55, 63] },
+]
+
 function Heart({ filled = true }: { filled?: boolean }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -60,6 +68,25 @@ function Sparkle() {
   )
 }
 
+function MomoCharacter() {
+  return (
+    <svg className="momo-art" viewBox="0 0 120 150" aria-hidden="true">
+      <path className="momo-hair" d="M22 42C20 15 44 4 72 10c21 5 30 20 25 39L82 35 65 23 47 26Z" />
+      <path className="momo-face" d="M24 38c2-19 20-26 41-23 25 3 36 21 30 43-4 13-15 22-29 24-21 3-39-9-42-27Z" />
+      <path className="momo-ear" d="M88 44c17-5 20 20 3 23" />
+      <path className="momo-brow" d="M34 37c7-5 14-5 20-1M66 35c7-3 13-1 18 3" />
+      <circle className="momo-eye" cx="46" cy="45" r="3.5" />
+      <circle className="momo-eye" cx="75" cy="44" r="3.5" />
+      <path className="momo-mouth" d="M52 61c8 5 15 5 22 0" />
+      <path className="momo-shirt" d="M35 77c13-7 35-6 49 1l9 40H27Z" />
+      <path className="momo-arm" d="M31 83 13 103M86 82l19 15" />
+      <path className="momo-shorts" d="M27 116h66l-5 20H64l-4-10-4 10H32Z" />
+      <path className="momo-leg" d="M42 134v11M78 134v11" />
+      <path className="momo-shoe" d="M29 145h26M66 145h25" />
+    </svg>
+  )
+}
+
 function App() {
   const [photos, setPhotos] = useState<string[]>([])
   const [hostedPhotos, setHostedPhotos] = useState<string[]>([])
@@ -74,6 +101,11 @@ function App() {
   const [galleryPage, setGalleryPage] = useState(0)
   const [selectedPhoto, setSelectedPhoto] = useState<{ src: string; alt: string; caption: string } | null>(null)
   const [savedMessage, setSavedMessage] = useState('')
+  const [mazeLevel, setMazeLevel] = useState(0)
+  const [mazeProgress, setMazeProgress] = useState(0)
+  const [pullingSnake, setPullingSnake] = useState(false)
+  const [sitSeconds, setSitSeconds] = useState(0)
+  const [characterEscaped, setCharacterEscaped] = useState(false)
 
   useEffect(() => {
     try {
@@ -115,6 +147,33 @@ function App() {
       window.removeEventListener('keydown', closeOnEscape)
     }
   }, [selectedPhoto])
+
+  useEffect(() => {
+    const releaseSnake = () => setPullingSnake(false)
+    window.addEventListener('pointerup', releaseSnake)
+    return () => window.removeEventListener('pointerup', releaseSnake)
+  }, [])
+
+  useEffect(() => {
+    if (sitSeconds <= 0) return
+    const timer = window.setInterval(() => {
+      setSitSeconds((seconds) => {
+        if (seconds <= 1) {
+          setCharacterEscaped(true)
+          return 0
+        }
+        return seconds - 1
+      })
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [sitSeconds > 0])
+
+  useEffect(() => {
+    const escapeTimer = window.setTimeout(() => {
+      if (sitSeconds === 0) setCharacterEscaped(true)
+    }, 4500)
+    return () => window.clearTimeout(escapeTimer)
+  }, [])
 
   const addPhotos = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []).slice(0, 5 - photos.length)
@@ -161,6 +220,21 @@ function App() {
       x: 12 + Math.floor(Math.random() * 72),
       y: 12 + Math.floor(Math.random() * 68),
     })
+  }
+
+  const visitMazeCell = (cell: number) => {
+    const path = mazeLevels[mazeLevel].path
+    if (cell === path[mazeProgress]) {
+      setMazeProgress((progress) => progress + 1)
+    } else if (cell !== path[Math.max(0, mazeProgress - 1)]) {
+      setMazeProgress(0)
+      setPullingSnake(false)
+    }
+  }
+
+  const tapCharacter = () => {
+    setSitSeconds((seconds) => seconds + 10)
+    setCharacterEscaped(false)
   }
 
   return (
@@ -414,6 +488,82 @@ function App() {
               )}
             </div>
             {fortune !== null && <button className="text-button" onClick={() => setFortune(null)}>Choose again</button>}
+          </article>
+
+          <article className="game-card maze-game">
+            <span className="game-label">Game five · Level {mazeLevel + 1} of 5</span>
+            <h3>Pull the little snake home</h3>
+            <p>Press the snake, then drag through the pink path without touching a wall.</p>
+            <div
+              className="maze-board"
+              style={{ gridTemplateColumns: `repeat(${mazeLevels[mazeLevel].size}, 1fr)` }}
+              onPointerLeave={() => setPullingSnake(false)}
+            >
+              {Array.from({ length: mazeLevels[mazeLevel].size ** 2 }).map((_, cell) => {
+                const pathIndex = mazeLevels[mazeLevel].path.indexOf(cell)
+                const complete = mazeProgress >= mazeLevels[mazeLevel].path.length
+                return (
+                  <button
+                    key={cell}
+                    className={`maze-cell ${pathIndex >= 0 ? 'maze-path' : 'maze-wall'} ${pathIndex < mazeProgress ? 'snake-trail' : ''}`}
+                    aria-label={pathIndex === 0 ? 'Start pulling snake' : pathIndex === mazeLevels[mazeLevel].path.length - 1 ? 'Maze finish' : 'Maze cell'}
+                    onPointerDown={() => {
+                      if (pathIndex === 0 && !complete) {
+                        setMazeProgress(1)
+                        setPullingSnake(true)
+                      }
+                    }}
+                    onPointerEnter={() => pullingSnake && visitMazeCell(cell)}
+                  >
+                    {pathIndex === 0 && mazeProgress === 0 && <span className="snake-head">●</span>}
+                    {pathIndex === mazeLevels[mazeLevel].path.length - 1 && <span className="maze-finish"><Heart /></span>}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="maze-status" aria-live="polite">
+              {mazeProgress >= mazeLevels[mazeLevel].path.length ? (
+                <>
+                  <strong>Made it home!</strong>
+                  <button onClick={() => {
+                    setMazeLevel((level) => (level + 1) % mazeLevels.length)
+                    setMazeProgress(0)
+                  }}>{mazeLevel === 4 ? 'Play from easy again' : 'Try the next level'}</button>
+                </>
+              ) : <span>{['Easy peasy', 'A little twisty', 'Getting clever', 'Nearly expert', 'Maze master'][mazeLevel]}</span>}
+            </div>
+          </article>
+
+          <article className="game-card pixel-game">
+            <span className="game-label">Game six</span>
+            <h3>Make Momo sit still</h3>
+            <p>Tap the wiggly pixel pal. Every tap adds 10 seconds of quiet chair time.</p>
+            <div className="pixel-room">
+              <div className="pixel-chair"><span /><i /></div>
+              {!characterEscaped && (
+                <button
+                  className={`pixel-character ${sitSeconds > 0 ? 'is-sitting' : ''}`}
+                  onClick={tapCharacter}
+                  aria-label="Tap Momo to add ten seconds of sitting time"
+                >
+                  <MomoCharacter />
+                </button>
+              )}
+              <span className="room-note">{characterEscaped ? 'Oh! Momo escaped the card…' : sitSeconds > 0 ? 'Such a good sitter.' : 'Quick, tap Momo!'}</span>
+            </div>
+            {characterEscaped && (
+              <button
+                className="pixel-character escaped-character"
+                onClick={tapCharacter}
+                aria-label="Catch Momo and add ten seconds of sitting time"
+              >
+                <MomoCharacter />
+              </button>
+            )}
+            <div className="sit-counter" aria-live="polite">
+              <strong>{sitSeconds}s</strong>
+              <span>{sitSeconds > 0 ? 'banked chair time' : 'Catch Momo before they roam away!'}</span>
+            </div>
           </article>
         </div>
       </section>

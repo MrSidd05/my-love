@@ -175,6 +175,65 @@ blockquote { color: var(--color-berry); font-family: 'Gochi Hand', cursive; font
 .fortune-result { align-items: center; display: flex; flex-direction: column; font-family: 'Gochi Hand', cursive; min-height: 76px; padding: 0 14px; }
 .fortune-result strong { color: var(--color-berry); font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 7px; }
 .fortune-result span { color: #806d6d; font-size: 17px; line-height: 1.5; }
+.maze-board {
+  background: var(--color-ink); border: 9px solid var(--color-ink); border-radius: 18px; display: grid;
+  gap: 3px; margin: 30px auto 22px; max-width: 360px; overflow: hidden; touch-action: none;
+}
+.maze-cell { aspect-ratio: 1; border: 0; min-width: 0; padding: 0; position: relative; touch-action: none; }
+.maze-path { background: #f9dfe2; cursor: crosshair; }
+.maze-wall { background: #765f61; }
+.maze-path.snake-trail { background: var(--color-sage); }
+.maze-path.snake-trail::after { background: #78906c; border-radius: 50%; content: ''; inset: 27%; position: absolute; }
+.snake-head {
+  align-items: center; background: #78906c; border-radius: 50%; color: white; cursor: grab; display: flex;
+  font-size: 10px; inset: 15%; justify-content: center; position: absolute; z-index: 2;
+}
+.snake-head::before, .snake-head::after { background: white; border-radius: 50%; content: ''; height: 5px; position: absolute; top: 20%; width: 5px; }
+.snake-head::before { left: 22%; }.snake-head::after { right: 22%; }
+.maze-finish { color: var(--color-berry); display: block; inset: 20%; position: absolute; }
+.maze-status { align-items: center; display: flex; flex-direction: column; font-family: 'Gochi Hand', cursive; min-height: 56px; }
+.maze-status strong { color: var(--color-berry); font-size: 20px; }
+.maze-status button {
+  background: var(--color-berry); border: 0; border-radius: 999px; color: white; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; margin-top: 8px; padding: 9px 15px;
+}
+.pixel-room {
+  background: linear-gradient(#f8e3d8 0 72%, #d9c5b1 72%); border: 5px solid var(--color-ink); border-radius: 12px;
+  height: 280px; margin: 28px auto 20px; max-width: 360px; overflow: hidden; position: relative;
+}
+.pixel-room::before { background: #fff6df; border: 4px solid white; content: ''; height: 62px; left: 22px; position: absolute; top: 22px; width: 54px; }
+.pixel-chair { bottom: 37px; height: 93px; left: 50%; position: absolute; transform: translateX(-50%); width: 74px; }
+.pixel-chair span { background: #a96762; border: 5px solid var(--color-ink); bottom: 22px; height: 35px; left: 2px; position: absolute; width: 70px; }
+.pixel-chair i { border: 5px solid var(--color-ink); border-bottom: 0; bottom: 52px; height: 51px; left: 10px; position: absolute; width: 54px; }
+.pixel-character {
+  animation: character-dart 3.2s ease-in-out infinite alternate; background: none; border: 0; cursor: pointer;
+  filter: drop-shadow(0 5px 2px rgba(79,60,60,.2)); height: 130px; left: 15%; padding: 0; position: absolute; top: 26%; width: 88px; z-index: 4;
+}
+.momo-art { height: 100%; overflow: visible; width: 100%; }
+.momo-hair { fill: #292123; stroke: #292123; stroke-linejoin: round; stroke-width: 5; }
+.momo-face { fill: #f2bd91; stroke: #292123; stroke-linejoin: round; stroke-width: 5; }
+.momo-ear, .momo-brow, .momo-mouth, .momo-arm, .momo-leg, .momo-shoe { fill: none; stroke: #292123; stroke-linecap: round; stroke-linejoin: round; }
+.momo-ear, .momo-arm, .momo-leg, .momo-shoe { stroke-width: 6; }
+.momo-brow { stroke-width: 7; }.momo-mouth { stroke-width: 3; }
+.momo-eye { fill: #292123; }
+.momo-shirt { fill: #e24f54; stroke: #292123; stroke-linejoin: round; stroke-width: 5; }
+.momo-shorts { fill: #f2d34f; stroke: #292123; stroke-linejoin: round; stroke-width: 5; }
+.pixel-character .momo-art { animation: head-wiggle .5s steps(2) infinite; transform-origin: 50% 58%; }
+.pixel-character.is-sitting { animation: none; left: calc(50% - 44px); top: 34%; transform: rotate(-3deg); }
+.pixel-character.is-sitting .momo-art { animation-duration: 1.1s; }
+.room-note { bottom: 9px; color: #796363; font-family: 'Gochi Hand', cursive; font-size: 13px; left: 0; position: absolute; right: 0; }
+.sit-counter { align-items: center; display: flex; flex-direction: column; font-family: 'Gochi Hand', cursive; }
+.sit-counter strong { color: var(--color-berry); font-family: 'Playfair Display', serif; font-size: 27px; }
+.escaped-character {
+  animation: roam-page 14s linear infinite, character-bob .5s steps(2) infinite; bottom: auto; left: 5vw; position: fixed; top: 82vh; z-index: 40;
+}
+@keyframes character-dart { 0% { left: 8%; transform: rotate(-4deg); } 45% { top: 21%; } 100% { left: 76%; top: 50%; transform: rotate(5deg); } }
+@keyframes head-wiggle { from { transform: rotate(-8deg); } to { transform: rotate(8deg); } }
+@keyframes character-bob { from { margin-top: 0; } to { margin-top: -8px; } }
+@keyframes roam-page {
+  0% { left: 3vw; top: 82vh; } 24% { left: 75vw; top: 68vh; } 48% { left: 84vw; top: 14vh; }
+  72% { left: 18vw; top: 20vh; } 100% { left: 3vw; top: 82vh; }
+}
 footer { align-items: center; background: var(--color-ink); color: #f8eaea; display: flex; flex-direction: column; padding: 74px 24px; text-align: center; }
 footer > svg { color: var(--color-rose); margin-bottom: 20px; width: 28px; }
 footer p { font-family: 'Playfair Display', serif; font-size: clamp(21px,3vw,32px); }
@@ -227,4 +286,5 @@ footer span { color: #bdaaaa; font-family: 'Gochi Hand', cursive; margin-top: 13
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+  .pixel-character { animation-duration: 8s; }
 }
