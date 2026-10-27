@@ -16,10 +16,10 @@ const starterPhotos = [
 ]
 
 const loveNotes = [
-  ['Your smile', 'The kind that makes an ordinary day feel like sunshine.'],
-  ['Your soft heart', 'The way you care so deeply is one of your superpowers.'],
-  ['Every version of you', 'Happy, quiet, tired, silly—I choose you in every mood.'],
-  ['The way you try', 'Even on hard days, you are doing more than enough.'],
+  ['Your smile', 'The kind that makes an ordinary day feel like sunshine.', '☀️'],
+  ['Your soft heart', 'The way you care so deeply is one of your superpowers.', '💗'],
+  ['Every version of you', 'Happy, quiet, tired, silly—I choose you in every mood.', '🦋'],
+  ['The way you try', 'Even on hard days, you are doing more than enough.', '🌱'],
 ]
 
 const compliments = [
@@ -62,6 +62,7 @@ function Sparkle() {
 
 function App() {
   const [photos, setPhotos] = useState<string[]>([])
+  const [hostedPhotos, setHostedPhotos] = useState<string[]>([])
   const [heartSpot, setHeartSpot] = useState(4)
   const [found, setFound] = useState(false)
   const [openedClouds, setOpenedClouds] = useState<number[]>([])
@@ -69,6 +70,9 @@ function App() {
   const [kissCount, setKissCount] = useState(0)
   const [kissPosition, setKissPosition] = useState({ x: 48, y: 45 })
   const [fortune, setFortune] = useState<number | null>(null)
+  const [notePop, setNotePop] = useState({ index: -1, count: 0 })
+  const [galleryPage, setGalleryPage] = useState(0)
+  const [selectedPhoto, setSelectedPhoto] = useState<{ src: string; alt: string; caption: string } | null>(null)
   const [savedMessage, setSavedMessage] = useState('')
 
   useEffect(() => {
@@ -77,12 +81,40 @@ function App() {
     } catch {
       setPhotos([])
     }
+    fetch('/scrapbook/photos.json')
+      .then((response) => response.json())
+      .then((files: string[]) => setHostedPhotos(files.map((file) => `/scrapbook/${encodeURIComponent(file)}`)))
+      .catch(() => setHostedPhotos([]))
   }, [])
 
   const gallery = useMemo(
-    () => [...photos.map((src) => ({ src, alt: 'A photo from our memories' })), ...starterPhotos],
-    [photos],
+    () => [
+      ...hostedPhotos.map((src) => ({ src, alt: 'A hosted photo from our scrapbook', caption: 'one of our favorites' })),
+      ...photos.map((src) => ({ src, alt: 'A photo from our memories', caption: 'saved in this browser' })),
+      //...starterPhotos.map((photo, index) => ({ ...photo, caption: ['soft days', 'little joys', 'cozy moments'][index] })),
+    ],
+    [hostedPhotos, photos],
   )
+  const photosPerPage = 6
+  const galleryPages = Math.max(1, Math.ceil(gallery.length / photosPerPage))
+  const visiblePhotos = gallery.slice(galleryPage * photosPerPage, (galleryPage + 1) * photosPerPage)
+
+  useEffect(() => {
+    setGalleryPage((page) => Math.min(page, galleryPages - 1))
+  }, [galleryPages])
+
+  useEffect(() => {
+    if (!selectedPhoto) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSelectedPhoto(null)
+    }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [selectedPhoto])
 
   const addPhotos = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []).slice(0, 5 - photos.length)
@@ -178,13 +210,22 @@ function App() {
           <p>There are a million, but let’s start with these.</p>
         </div>
         <div className="note-grid">
-          {loveNotes.map(([title, copy], index) => (
-            <article className={`love-note note-${index + 1}`} key={title}>
+          {loveNotes.map(([title, copy, emoji], index) => (
+            <button
+              className={`love-note note-${index + 1}`}
+              key={title}
+              onClick={() => setNotePop((previous) => ({ index, count: previous.count + 1 }))}
+              aria-label={`${title}: ${copy}. Tap for a little surprise.`}
+            >
+              {notePop.index === index && (
+                <span className="note-pop" key={notePop.count} aria-hidden="true">{emoji}</span>
+              )}
               <span className="note-number">0{index + 1}</span>
               <span className="note-heart"><Heart filled={index % 2 === 0} /></span>
               <h3>{title}</h3>
               <p>{copy}</p>
-            </article>
+              <span className="tap-hint">tap me</span>
+            </button>
           ))}
         </div>
         <blockquote>“You never have to be less of yourself to be more loved.”</blockquote>
@@ -204,13 +245,34 @@ function App() {
         </div>
         {savedMessage && <p className="save-message" role="status">{savedMessage}</p>}
         <div className="photo-grid">
-          {gallery.slice(0, 6).map((photo, index) => (
+          {visiblePhotos.map((photo, index) => (
             <figure className={`photo-card tilt-${(index % 3) + 1}`} key={`${photo.src}-${index}`}>
-              <img src={photo.src} alt={photo.alt} />
-              <figcaption>{index < photos.length ? 'one of our favorites' : ['soft days', 'little joys', 'cozy moments'][index - photos.length] || 'our memory'}</figcaption>
+              <button className="photo-open" onClick={() => setSelectedPhoto(photo)} aria-label={`Open photo: ${photo.caption}`}>
+                <img src={photo.src} alt={photo.alt} />
+                <figcaption>{photo.caption}</figcaption>
+              </button>
             </figure>
           ))}
         </div>
+        {galleryPages > 1 && (
+          <div className="gallery-controls" aria-label="Scrapbook pages">
+            <button
+              onClick={() => setGalleryPage((page) => Math.max(0, page - 1))}
+              disabled={galleryPage === 0}
+              aria-label="Show previous scrapbook photos"
+            >
+              <span aria-hidden="true">←</span> Previous
+            </button>
+            <span>Page {galleryPage + 1} of {galleryPages}</span>
+            <button
+              onClick={() => setGalleryPage((page) => Math.min(galleryPages - 1, page + 1))}
+              disabled={galleryPage === galleryPages - 1}
+              aria-label="Show more scrapbook photos"
+            >
+              More photos <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        )}
         {photos.length > 0 && (
           <button
             className="text-button"
@@ -222,6 +284,16 @@ function App() {
           >
             Clear my added photos
           </button>
+        )}
+        {selectedPhoto && (
+          <div className="photo-lightbox" role="dialog" aria-modal="true" aria-label="Enlarged scrapbook photo" onClick={() => setSelectedPhoto(null)}>
+            <button className="lightbox-close" onClick={() => setSelectedPhoto(null)} aria-label="Close enlarged photo">×</button>
+            <figure className="opened-photo-card" onClick={(event) => event.stopPropagation()}>
+              <img src={selectedPhoto.src} alt={selectedPhoto.alt} />
+              <figcaption>{selectedPhoto.caption}</figcaption>
+              <span>our little memory</span>
+            </figure>
+          </div>
         )}
       </section>
 

@@ -86,13 +86,15 @@ h2 { font-size: clamp(42px,5vw,68px); line-height: 1.1; margin: 12px 0 16px; }
 .love-section::before { background-image: radial-gradient(rgba(168,79,102,.14) 1px, transparent 1px); background-size: 19px 19px; content: ''; inset: 0; opacity: .35; position: absolute; }
 .love-section > * { position: relative; }
 .note-grid { display: grid; gap: 22px; grid-template-columns: repeat(4,1fr); margin: auto; max-width: 1200px; }
-.love-note { background: #fffdf9; border: 1px solid rgba(168,79,102,.1); box-shadow: 0 16px 40px rgba(102,66,66,.08); min-height: 285px; padding: 28px; position: relative; transition: transform .2s; }
+.love-note { background: #fffdf9; border: 1px solid rgba(168,79,102,.1); box-shadow: 0 16px 40px rgba(102,66,66,.08); color: inherit; cursor: pointer; min-height: 285px; padding: 28px; position: relative; text-align: left; transition: transform .2s; }
 .love-note:hover { transform: translateY(-7px) rotate(0); }
 .note-1 { transform: rotate(-2deg); }.note-2 { transform: rotate(1.5deg); }.note-3 { transform: rotate(-1deg); }.note-4 { transform: rotate(2deg); }
 .note-number { color: #d8bcbc; font-family: 'Gochi Hand', cursive; font-size: 13px; }
 .note-heart { color: var(--color-rose); display: block; margin: 35px 0 21px; width: 35px; }
 .love-note h3, .game-card h3 { font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 10px; }
 .love-note p, .game-card > p { color: #806d6d; font-size: 14px; line-height: 1.7; }
+.tap-hint { bottom: 18px; color: #b39292; font-family: 'Gochi Hand', cursive; font-size: 12px; position: absolute; right: 22px; }
+.note-pop { animation: note-pop .7s ease-out both; font-size: 46px; left: 50%; pointer-events: none; position: absolute; top: 34%; z-index: 3; }
 blockquote { color: var(--color-berry); font-family: 'Gochi Hand', cursive; font-size: 21px; margin: 70px auto 0; text-align: center; }
 .memory-section { background: #fdf8f0; }
 .memory-heading { align-items: end; display: flex; justify-content: space-between; margin: 0 auto 50px; max-width: 1200px; }
@@ -104,8 +106,20 @@ blockquote { color: var(--color-berry); font-family: 'Gochi Hand', cursive; font
 .photo-card { background: white; box-shadow: 0 15px 32px rgba(85,60,60,.12); padding: 12px 12px 42px; transition: transform .25s; }
 .photo-card:hover { transform: rotate(0) translateY(-6px); }
 .tilt-1 { transform: rotate(-1.8deg); }.tilt-2 { transform: rotate(1.3deg); }.tilt-3 { transform: rotate(-.7deg); }
+.photo-open { background: transparent; border: 0; color: inherit; cursor: zoom-in; display: block; padding: 0; width: 100%; }
 .photo-card img { aspect-ratio: 4/3; object-fit: cover; width: 100%; }
 .photo-card figcaption { color: #806d6d; font-family: 'Gochi Hand', cursive; font-size: 16px; padding-top: 12px; text-align: center; }
+.photo-lightbox { align-items: center; animation: fade-in .22s ease-out both; background: rgba(45,31,34,.78); backdrop-filter: blur(10px); display: flex; inset: 0; justify-content: center; padding: 70px 22px 30px; position: fixed; z-index: 50; }
+.opened-photo-card { animation: card-open .48s cubic-bezier(.2,.8,.2,1) both; background: #fffdf9; box-shadow: 0 28px 80px rgba(20,10,12,.4); max-height: 82vh; max-width: min(760px, 90vw); padding: clamp(12px,2vw,20px) clamp(12px,2vw,20px) clamp(28px,4vw,48px); position: relative; transform-origin: center bottom; }
+.opened-photo-card img { display: block; max-height: 65vh; object-fit: contain; width: 100%; }
+.opened-photo-card figcaption { color: var(--color-ink); font-family: 'Gochi Hand', cursive; font-size: clamp(18px,2vw,24px); padding-top: 16px; text-align: center; }
+.opened-photo-card > span { bottom: 12px; color: #b99b9b; font-family: 'Gochi Hand', cursive; font-size: 12px; position: absolute; right: 20px; transform: rotate(-4deg); }
+.lightbox-close { align-items: center; background: #fffdf9; border: 0; border-radius: 50%; color: var(--color-ink); cursor: pointer; display: flex; font-family: sans-serif; font-size: 28px; height: 44px; justify-content: center; line-height: 1; position: absolute; right: clamp(20px,4vw,54px); top: 20px; width: 44px; }
+.gallery-controls { align-items: center; display: flex; gap: 22px; justify-content: center; margin: 50px auto 0; }
+.gallery-controls button { align-items: center; background: var(--color-ink); border: 0; border-radius: 999px; color: white; cursor: pointer; display: flex; font-size: 13px; font-weight: 600; gap: 9px; padding: 13px 20px; transition: transform .2s, opacity .2s; }
+.gallery-controls button:hover:not(:disabled) { transform: translateY(-2px); }
+.gallery-controls button:disabled { cursor: not-allowed; opacity: .3; }
+.gallery-controls > span { color: #8d7474; font-family: 'Gochi Hand', cursive; font-size: 15px; min-width: 82px; text-align: center; }
 .text-button { background: none; border: 0; color: var(--color-berry); cursor: pointer; display: block; font-size: 12px; margin: 36px auto 0; text-decoration: underline; text-underline-offset: 4px; }
 .play-section { background: #f2eee8; }
 .games-grid { display: grid; gap: 26px; grid-template-columns: 1fr 1fr; margin: auto; max-width: 1000px; }
@@ -169,6 +183,17 @@ footer span { color: #bdaaaa; font-family: 'Gochi Hand', cursive; margin-top: 13
 @keyframes grow { from { opacity: 0; transform: translateY(28px) scale(.25); transform-origin: bottom; } to { opacity: 1; } }
 @keyframes surprise-pop { from { opacity: 0; transform: scale(.45) rotate(-12deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
 @keyframes kiss-float { from { margin-top: -5px; } to { margin-top: 7px; } }
+@keyframes note-pop {
+  0% { opacity: 0; transform: translate(-50%, 12px) scale(.35) rotate(-12deg); }
+  45% { opacity: 1; transform: translate(-50%, -35px) scale(1.25) rotate(8deg); }
+  100% { opacity: 0; transform: translate(-50%, -75px) scale(.9) rotate(0); }
+}
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes card-open {
+  0% { opacity: 0; transform: perspective(900px) rotateY(-18deg) rotateX(10deg) scale(.72) translateY(40px); }
+  65% { opacity: 1; transform: perspective(900px) rotateY(2deg) rotateX(-1deg) scale(1.02) translateY(0); }
+  100% { opacity: 1; transform: perspective(900px) rotateY(0) rotateX(0) scale(1) translateY(0); }
+}
 
 @media (max-width: 900px) {
   .nav-links { display: none; }
@@ -190,6 +215,9 @@ footer span { color: #bdaaaa; font-family: 'Gochi Hand', cursive; margin-top: 13
   .love-note { min-height: 250px; }
   .memory-heading { align-items: flex-start; flex-direction: column; gap: 26px; }
   .save-message { margin-top: -12px; text-align: left; }
+  .gallery-controls { gap: 10px; }
+  .gallery-controls button { font-size: 0; height: 46px; justify-content: center; padding: 0; width: 46px; }
+  .gallery-controls button span { font-size: 20px; }
   .game-card { min-height: 560px; padding: 30px 20px; }
   .garden { max-width: 100%; transform: scale(.9); }
   .envelope-row { gap: 9px; }
