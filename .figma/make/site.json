@@ -1,0 +1,10 @@
+{
+  "description": "A loving, playful website for a baby girl featuring encouraging messages, a photo gallery, and simple games to brighten her day and celebrate family love.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
