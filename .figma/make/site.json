@@ -4,7 +4,7 @@
   "description": "A loving, playful website made with love for Ishika, featuring encouraging messages, a photo gallery, and simple games to brighten her day and celebrate family love.",
   "language": "en",
   "icons": {
-    "icon": "/favicon.webp"
+    "icon": "/favicon.svg"
   },
   "robots": {
     "index": false

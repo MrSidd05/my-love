@@ -28,15 +28,9 @@ react(),
       figmaLinkedPackageSourcemaps(),
     ],
     resolve: {
-      // Keep the preview runtime and application on one React module instance.
-      // This is especially important after importing projects with their own lockfiles.
-      dedupe: ['react', 'react-dom'],
       alias: {
         '@': path.resolve(__dirname, './src'),
       },
-    },
-    optimizeDeps: {
-      include: ['react', 'react-dom', 'react-dom/client'],
     },
     server: {
       host: process.env.FIGMA_DEV_SERVER_HOST || '0.0.0.0',
