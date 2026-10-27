@@ -39,6 +39,38 @@ const fortunes = [
   'Tonight calls for a blanket, a comfort movie, and absolutely no worries.',
 ]
 
+const gentleTruths = [
+  'You do not have to be cheerful to be deeply loved.',
+  'Your soft heart is still your strength, even on hard days.',
+  'Rest is not giving up. It is how beautiful things keep growing.',
+  'You are talented, kind, and enough—even when today feels heavy.',
+  'You can take all the space you need. Love will still be here.',
+]
+
+const positiveSparks = [
+  'Your kindness is a quiet superpower',
+  'You make ordinary days feel warmer',
+  'Your beautiful heart matters',
+  'You are loved without conditions',
+  'Your talent deserves room to shine',
+  'You bring joy just by being you',
+  'Your family is lucky to have your love',
+  'You are allowed to rest and begin again',
+]
+
+const readingJoyPrompts = [
+  '“Turn one page, my love. The world can wait while you remember how beautifully your curious mind glows.”',
+  '“Every story you enter becomes warmer because a kind heart like yours is reading it.”',
+  '“You are the heroine I would choose in every lifetime—brave, soft, clever, and wonderfully you.”',
+  '“Read slowly. Somewhere between these lines, remember that I am always cheering for the woman you are becoming.”',
+  '“Your mind is a library of talent, dreams, and kindness. I fall in love with every chapter.”',
+  '“Even on a difficult page, our story is still full of tenderness, laughter, and better chapters ahead.”',
+  '“You never need to shrink your light. Your intelligence and beautiful heart deserve the whole page.”',
+  '“Take this quiet moment for yourself; my love will sit beside you without asking for a single word.”',
+  '“Books hold a thousand worlds, but you are still my favorite place to come home to.”',
+  '“Close this chapter knowing you are capable, cherished, and loved more deeply than any sentence can say.”',
+]
+
 const mazeLevels = [
   { size: 4, path: [0, 1, 2, 6, 10, 9, 13, 14, 15], branches: [[1, 5], [10, 11]] },
   { size: 5, path: [0, 5, 10, 11, 6, 7, 8, 13, 18, 17, 22, 23, 24], branches: [[0, 1, 2], [8, 9, 4], [17, 16, 21]] },
@@ -265,11 +297,20 @@ function App() {
     delay: number
     duration: number
     size: number
+    text?: string
   }>>([])
   const [shinchanSendingLove, setShinchanSendingLove] = useState(false)
   const bigHeartRef = useRef<HTMLButtonElement>(null)
+  const fireHeartRef = useRef<HTMLButtonElement>(null)
   const escapedCharacterRef = useRef<HTMLButtonElement>(null)
   const lastShinchanLove = useRef(0)
+  const [mood, setMood] = useState<'happy' | 'angry'>('happy')
+  const [breathing, setBreathing] = useState(false)
+  const [breathPhase, setBreathPhase] = useState(0)
+  const [truthIndex, setTruthIndex] = useState(0)
+  const [comfortChoice, setComfortChoice] = useState('')
+  const [danceBurst, setDanceBurst] = useState(0)
+  const [readingPromptIndex, setReadingPromptIndex] = useState(-1)
 
   useEffect(() => {
     try {
@@ -419,11 +460,30 @@ function App() {
       delay: Math.random() * 1.4,
       duration: 6.8 + Math.random() * 2.2,
       size: 15 + Math.round(Math.random() * 18),
+      text: 'I love you',
     }))
     setLoveReactions((items) => [...items.slice(-120), ...reactions])
     window.setTimeout(() => {
       setLoveReactions((items) => items.filter((item) => !item.id.startsWith(burstId)))
     }, 10600)
+  }
+
+  const sendPositiveSpark = () => {
+    const burstId = `spark-${Date.now()}-${Math.random()}`
+    const reactions = Array.from({ length: 18 }, (_, index) => ({
+      id: `${burstId}-${index}`,
+      kind: (index % 3 === 0 ? 'message' : 'heart') as 'heart' | 'message',
+      x: 4 + Math.random() * 92,
+      drift: Math.round(Math.random() * 170 - 85),
+      delay: Math.random() * 1.8,
+      duration: 7.5 + Math.random() * 2.5,
+      size: index % 3 === 0 ? 17 : 16 + Math.round(Math.random() * 18),
+      text: positiveSparks[Math.floor(index / 3) % positiveSparks.length],
+    }))
+    setLoveReactions((items) => [...items.slice(-120), ...reactions])
+    window.setTimeout(() => {
+      setLoveReactions((items) => items.filter((item) => !item.id.startsWith(burstId)))
+    }, 12000)
   }
 
   useEffect(() => {
@@ -432,17 +492,18 @@ function App() {
     let pauseTimer = 0
     const watchCrossing = () => {
       const character = escapedCharacterRef.current?.getBoundingClientRect()
-      const heart = bigHeartRef.current?.getBoundingClientRect()
-      const heartIsVisible = heart && heart.bottom > 0 && heart.top < window.innerHeight
-      const crossesHeart = character && heart
-        && character.left < heart.right
-        && character.right > heart.left
-        && character.top < heart.bottom
-        && character.bottom > heart.top
-      if (heartIsVisible && crossesHeart && Date.now() - lastShinchanLove.current > 5000) {
+      const target = (mood === 'happy' ? bigHeartRef.current : fireHeartRef.current)?.getBoundingClientRect()
+      const targetIsVisible = target && target.bottom > 0 && target.top < window.innerHeight
+      const crossesTarget = character && target
+        && character.left < target.right
+        && character.right > target.left
+        && character.top < target.bottom
+        && character.bottom > target.top
+      if (targetIsVisible && crossesTarget && Date.now() - lastShinchanLove.current > 5000) {
         lastShinchanLove.current = Date.now()
         setShinchanSendingLove(true)
-        sendLove()
+        if (mood === 'happy') sendLove()
+        else sendPositiveSpark()
         pauseTimer = window.setTimeout(() => setShinchanSendingLove(false), 1000)
       }
       frame = window.requestAnimationFrame(watchCrossing)
@@ -452,24 +513,37 @@ function App() {
       window.cancelAnimationFrame(frame)
       window.clearTimeout(pauseTimer)
     }
-  }, [characterEscaped])
+  }, [characterEscaped, mood])
+
+  useEffect(() => {
+    if (!breathing) {
+      setBreathPhase(0)
+      return
+    }
+    const timer = window.setInterval(() => setBreathPhase((phase) => (phase + 1) % 3), 4000)
+    return () => window.clearInterval(timer)
+  }, [breathing])
 
   return (
-    <main>
+    <main className={`mood-${mood}`}>
       <nav className="nav-shell" aria-label="Main navigation">
         <a className="brand" href="#home">
-          <span className="brand-mark"><Heart /></span>
+          <span className={`brand-mark ${mood === 'angry' ? 'brand-fire' : ''}`}>{mood === 'happy' ? <Heart /> : '🔥'}</span>
           <span>for my pooky</span>
         </a>
         <div className="nav-links">
-          <a href="#love">little love notes</a>
-          <a href="#memories">our memories</a>
+          <a href={mood === 'happy' ? '#love' : '#mood-care'}>{mood === 'happy' ? 'little love notes' : 'gentle reset'}</a>
+          <a href={mood === 'happy' ? '#memories' : '#quiet-corner'}>{mood === 'happy' ? 'our memories' : 'quiet corner'}</a>
           <a href="#play">play a little</a>
         </div>
-        <a className="nav-heart" href="#love" aria-label="Go to love notes"><Heart /></a>
+        <div className={`mood-switch ${mood === 'angry' ? 'is-angry' : ''}`} aria-label="Choose page mood">
+          <span aria-hidden="true">{mood === 'happy' ? <Heart /> : '🔥'}</span>
+          <button onClick={() => setMood('happy')} aria-label="Switch to happy mode" title="Happy mode" />
+          <button onClick={() => setMood('angry')} aria-label="Switch to angry or quiet mode" title="I need quiet mode" />
+        </div>
       </nav>
 
-      <section className="hero" id="home">
+      <section className="hero happy-only" id="home">
         <div className="hero-copy">
           <span className="eyebrow"><span><Sparkle /></span>A tiny corner of the internet, just for you</span>
           <h1>hey, my <em>sweet girl</em></h1>
@@ -501,7 +575,87 @@ function App() {
         <div className="scroll-note">keep scrolling, love <span>↓</span></div>
       </section>
 
-      <section className="love-section section-pad" id="love">
+      <section className="angry-hero angry-only" id="home-angry">
+        <div className="angry-hero-copy">
+          <span className="angry-kicker">No fixing. No questions. Just here.</span>
+          <h1>hey, my <em>fierce girl</em></h1>
+          <p>You do not need to explain the storm. Be quiet, be angry, be tired—this little corner will hold you exactly as you are.</p>
+          <a className="angry-primary" href="#mood-care">Give me one gentle minute</a>
+          <span className="no-pressure-note">Talking is optional. Being loved is not.</span>
+        </div>
+        <button
+          ref={fireHeartRef}
+          className={`fire-heart ${shinchanSendingLove ? 'shinchan-love' : ''}`}
+          onClick={sendPositiveSpark}
+          aria-label="Send positive thoughts"
+        >
+          <span>🔥</span>
+          <i className="fire-ring ring-one" />
+          <i className="fire-ring ring-two" />
+          <small>your spark is safe here · tap the flame</small>
+        </button>
+      </section>
+
+      <section className="mood-care angry-only section-pad" id="mood-care">
+        <div className="section-heading">
+          <span className="angry-kicker">Pick only what feels easy</span>
+          <h2>a tiny reset, made for you</h2>
+          <p>No productivity. No pressure. Just four soft exits from a heavy moment.</p>
+        </div>
+        <div className="healing-grid">
+          <article className="healing-card breathe-card">
+            <span className="healing-number">01 · BREATHE</span>
+            <div className={`breathing-orb ${breathing ? `phase-${breathPhase}` : ''}`}>
+              <span>{breathing ? ['breathe in', 'hold softly', 'let it go'][breathPhase] : 'one quiet minute'}</span>
+            </div>
+            <h3>Come back to your breath</h3>
+            <p>Nothing to solve. Follow the circle and let your shoulders soften.</p>
+            <button onClick={() => setBreathing((value) => !value)}>{breathing ? 'Pause here' : 'Start breathing'}</button>
+          </article>
+          <article className={`healing-card dance-card ${danceBurst ? 'is-dancing' : ''}`} key={`dance-${danceBurst}`}>
+            <span className="healing-number">02 · SHAKE IT OUT</span>
+            <div className="dance-figure" aria-hidden="true"><MomoCharacter /></div>
+            <h3>A 20-second silly dance</h3>
+            <p>No steps. Shake your hands, make one ridiculous move, and let the mood be confused.</p>
+            <button onClick={() => setDanceBurst((value) => value + 1)}>Start a tiny dance</button>
+          </article>
+          <article className="healing-card book-card">
+            <span className="healing-number">03 · BOOK COCOON</span>
+            <div className="open-book" aria-hidden="true"><i /><i /><span>one page<br />at a time</span></div>
+            <h3>Hide inside a chapter</h3>
+            <p>Read just two pages of something familiar. You are allowed to leave the world outside.</p>
+            {readingPromptIndex >= 0 && (
+              <p className="reading-joy-message" key={readingPromptIndex}>
+                {readingJoyPrompts[readingPromptIndex]}
+                <small>{readingPromptIndex + 1} of 10</small>
+              </p>
+            )}
+            <button onClick={() => setReadingPromptIndex((value) => (value + 1) % readingJoyPrompts.length)}>Give me a reading prompt</button>
+          </article>
+          <article className="healing-card truth-card">
+            <span className="healing-number">04 · A TRUE THING</span>
+            <blockquote>“{gentleTruths[truthIndex]}”</blockquote>
+            <h3>Borrow my belief in you</h3>
+            <p>Until your own voice feels kind again, you can use mine.</p>
+            <button onClick={() => setTruthIndex((value) => (value + 1) % gentleTruths.length)}>Another gentle truth</button>
+          </article>
+        </div>
+      </section>
+
+      <section className="quiet-corner angry-only section-pad" id="quiet-corner">
+        <div>
+          <span className="angry-kicker">You choose the kind of care</span>
+          <h2>what would feel least difficult?</h2>
+          <div className="comfort-choices">
+            <button onClick={() => setComfortChoice('No reply needed. Take your space—I am nearby and I love you.')}>I need space</button>
+            <button onClick={() => setComfortChoice('Come here. No advice, no questions—just the safest, longest hug.')}>I need comfort</button>
+            <button onClick={() => setComfortChoice('Official prescription: one snack, one silly game, and absolutely no serious decisions.')}>Distract me</button>
+          </div>
+          {comfortChoice && <p className="comfort-response">{comfortChoice}</p>}
+        </div>
+      </section>
+
+      <section className="love-section happy-only section-pad" id="love">
         <div className="section-heading">
           <span className="section-kicker">A small reminder</span>
           <h2>things I adore about you</h2>
@@ -529,7 +683,7 @@ function App() {
         <blockquote>“You never have to be less of yourself to be more loved.”</blockquote>
       </section>
 
-      <section className="memory-section section-pad" id="memories">
+      <section className="memory-section happy-only section-pad" id="memories">
         <div className="memory-heading">
           <div>
             <span className="section-kicker">Our little scrapbook</span>
@@ -840,7 +994,7 @@ function App() {
               '--love-size': `${reaction.size}px`,
             } as CSSProperties}
           >
-            {reaction.kind === 'heart' ? <Heart /> : 'I love you'}
+            {reaction.kind === 'heart' ? <Heart /> : reaction.text}
           </span>
         ))}
       </div>
@@ -858,8 +1012,8 @@ function App() {
 
       <footer>
         <Heart />
-        <p>No matter the mood, no matter the day—<strong>I’m right here.</strong></p>
-        <span>loving you is my favorite thing</span>
+        <p>{mood === 'happy' ? <>No matter the mood, no matter the day—<strong>I’m right here.</strong></> : <>You never have to face the storm alone—<strong>I’m staying.</strong></>}</p>
+        <span>{mood === 'happy' ? 'loving you is my favorite thing' : 'take your time, pooky · there is no rush back'}</span>
       </footer>
     </main>
   )

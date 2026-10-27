@@ -35,10 +35,57 @@ main { overflow: hidden; }
 }
 .brand { align-items: center; color: var(--color-ink); display: flex; font-family: 'Gochi Hand', cursive; font-size: 22px; gap: 10px; text-decoration: none; }
 .brand-mark { color: var(--color-berry); display: inline-flex; width: 22px; }
+.brand-mark.brand-fire { animation: flame-flicker .8s ease-in-out infinite alternate; font-size: 21px; line-height: 1; }
 .nav-links { display: flex; gap: 34px; }
 .nav-links a { color: #806b6b; font-size: 13px; font-weight: 600; text-decoration: none; transition: color .2s; }
 .nav-links a:hover { color: var(--color-berry); }
-.nav-heart { color: var(--color-berry); width: 22px; }
+.mood-switch { height: 38px; position: relative; width: 44px; }
+.mood-switch > span { color: var(--color-berry); display: grid; font-size: 29px; height: 38px; place-items: center; width: 44px; }
+.mood-switch svg { width: 25px; }
+.mood-switch button { background: transparent; border: 0; bottom: 0; cursor: pointer; padding: 0; position: absolute; top: 0; width: 50%; z-index: 2; }
+.mood-switch button:first-of-type { left: 0; }.mood-switch button:last-of-type { right: 0; }
+.mood-switch.is-angry > span { animation: flame-flicker .8s ease-in-out infinite alternate; }
+.angry-only { display: none; }
+.mood-angry .happy-only { display: none; }
+.mood-angry .angry-only { display: grid; }
+.mood-angry { background: #fff4ed; }
+.mood-angry .nav-shell { background: rgba(255,247,241,.92); border-color: rgba(190,103,82,.18); }
+.mood-angry .brand,.mood-angry .nav-links a { color: #62474a; }
+.angry-hero { align-items: center; background: radial-gradient(circle at 72% 45%,rgba(229,119,91,.18),transparent 31%),linear-gradient(145deg,#fff9f4,#f7e2d8); color: #574044; grid-template-columns: 1.05fr .95fr; min-height: 100vh; padding: 130px clamp(24px,8vw,120px) 90px; }
+.angry-hero-copy { max-width: 680px; }.angry-kicker { color: #ed8969; font-family: 'Gochi Hand',cursive; font-size: 17px; }
+.angry-hero h1 { font-size: clamp(58px,7vw,100px); }.angry-hero h1 em { color: #ef735b; }
+.angry-hero-copy > p { color: #80696a; font-family: 'Playfair Display',serif; font-size: clamp(18px,1.6vw,23px); line-height: 1.65; }
+.angry-primary { background: #dc644d; border-radius: 999px; color: white; display: inline-flex; font-size: 13px; font-weight: 600; margin-top: 25px; padding: 15px 23px; text-decoration: none; }
+.no-pressure-note { color: #a07c76; display: block; font-family: 'Gochi Hand',cursive; margin: 16px 0 0 12px; }
+.fire-heart { align-items: center; background: transparent; border: 0; cursor: pointer; display: flex; flex-direction: column; height: 420px; justify-content: center; position: relative; width: 100%; }
+.fire-heart:hover > span { filter: drop-shadow(0 22px 38px rgba(232,78,50,.5)); transform: scale(1.04); }
+.fire-heart:active > span { transform: scale(.94); }
+.fire-heart.shinchan-love > span { animation: fire-love-pulse 1s ease-in-out; filter: drop-shadow(0 0 38px rgba(232,78,50,.8)); }
+.fire-heart > span { animation: flame-flicker .7s ease-in-out infinite alternate; filter: drop-shadow(0 22px 35px rgba(232,78,50,.35)); font-size: clamp(120px,15vw,220px); position: relative; z-index: 2; }
+.fire-heart small { color: #b86555; font-family: 'Gochi Hand',cursive; margin-top: 22px; }
+.fire-ring { border: 1px solid rgba(236,102,72,.25); border-radius: 50%; height: 300px; position: absolute; width: 300px; }.ring-two { height: 390px; width: 390px; }
+.mood-care { background: #f2e4da; display: none; }
+.mood-angry .mood-care { display: block; }
+.mood-care .section-heading p { color: #796563; }
+.healing-grid { display: grid; gap: 20px; grid-template-columns: repeat(2,1fr); margin: auto; max-width: 1050px; width: 100%; }
+.healing-card { align-items: center; background: #fff9f2; border: 1px solid rgba(104,69,64,.1); border-radius: 25px; display: flex; flex-direction: column; min-height: 500px; padding: 34px; text-align: center; }
+.healing-number { align-self: flex-start; color: #bd604e; font-size: 10px; font-weight: 600; letter-spacing: .15em; }
+.healing-card h3 { font: 600 28px 'Playfair Display',serif; margin: 20px 0 8px; }.healing-card p { color: #816d68; line-height: 1.6; max-width: 400px; }
+.healing-card button,.comfort-choices button { background: #513b40; border: 0; border-radius: 999px; color: white; cursor: pointer; font-size: 12px; font-weight: 600; margin-top: auto; padding: 13px 19px; }
+.breathing-orb { align-items: center; background: #e9b1a5; border-radius: 50%; color: #563e42; display: flex; font-family: 'Gochi Hand',cursive; height: 170px; justify-content: center; margin: 35px 0 8px; transition: transform 4s ease-in-out,background 1s; width: 170px; }
+.breathing-orb.phase-0 { background: #e9b1a5; transform: scale(1.28); }.breathing-orb.phase-1 { background: #d7b8af; transform: scale(1.28); }.breathing-orb.phase-2 { background: #c6cfc1; transform: scale(.82); }
+.dance-figure { height: 180px; margin: 22px 0 4px; width: 120px; }.dance-card.is-dancing .dance-figure { animation: tiny-dance .35s ease-in-out 7 alternate; }
+.open-book { height: 175px; margin: 27px auto 8px; position: relative; width: 245px; }.open-book i { background: #f4dfc8; border: 1px solid #cda98f; border-radius: 7px 18px 18px 7px; height: 150px; left: 4px; position: absolute; transform: rotate(-4deg); width: 120px; }.open-book i:nth-child(2) { border-radius: 18px 7px 7px 18px; left: 122px; transform: rotate(4deg); }.open-book span { color: #a17065; font-family: 'Gochi Hand',cursive; left: 50%; position: absolute; top: 55px; transform: translateX(-50%) rotate(-2deg); z-index: 2; }
+.reading-joy-message { animation: fade-in .35s ease-out; background: #fff4e8; border: 1px solid rgba(190,112,89,.16); border-radius: 15px; color: #8c554f !important; font-family: 'Gochi Hand',cursive; font-size: 16px; margin: -3px 0 18px; padding: 15px; }
+.reading-joy-message small { color: #b8897f; display: block; font-family: 'DM Sans',sans-serif; font-size: 9px; letter-spacing: .12em; margin-top: 8px; text-transform: uppercase; }
+.truth-card blockquote { align-items: center; display: flex; flex: 1; font: italic 24px/1.5 'Playfair Display',serif; margin: 24px auto 5px; max-width: 390px; }
+.quiet-corner { background: linear-gradient(145deg,#f5ddd3,#fbeee7); color: #5d4448; display: none; min-height: 620px; place-items: center; text-align: center; }
+.mood-angry .quiet-corner { display: grid; }
+.quiet-corner > div { max-width: 850px; }.quiet-corner h2 { font-size: clamp(42px,5vw,68px); }
+.comfort-choices { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 40px 0; }.comfort-choices button { background: #e17058; margin: 0; }
+.comfort-response { background: rgba(255,255,255,.58); border: 1px solid rgba(126,78,72,.12); border-radius: 18px; color: #795b5c; font: 20px/1.6 'Gochi Hand',cursive; margin: auto; max-width: 650px; padding: 25px; }
+.mood-angry footer { background: #5f474b; }.mood-angry footer > svg { color: #f5a38f; }
+.mood-angry .escaped-character { filter: drop-shadow(0 7px 4px rgba(64,37,40,.32)); }
 .hero {
   align-items: center; background: radial-gradient(circle at 12% 30%, #fff 0 2%, transparent 20%), var(--color-cream);
   display: grid; grid-template-columns: 1.08fr .92fr; min-height: 100vh; overflow: hidden;
@@ -291,6 +338,9 @@ footer span { color: #bdaaaa; font-family: 'Gochi Hand', cursive; margin-top: 13
   100% { opacity: 0; transform: translate(var(--love-drift),-115vh) rotate(8deg) scale(1.08); }
 }
 @keyframes heart-receives-love { 0%,100% { scale: 1; } 35%,70% { scale: 1.12; } 52% { scale: .98; } }
+@keyframes flame-flicker { from { transform: translateY(2px) rotate(-2deg) scale(.98); } to { transform: translateY(-3px) rotate(2deg) scale(1.03); } }
+@keyframes tiny-dance { from { transform: rotate(-12deg) translateX(-8px); } to { transform: rotate(12deg) translateX(8px); } }
+@keyframes fire-love-pulse { 0%,100% { transform: scale(1); } 35%,70% { transform: scale(1.14) rotate(-3deg); } 52% { transform: scale(.97) rotate(3deg); } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes card-open {
   0% { opacity: 0; transform: perspective(900px) rotateY(-18deg) rotateX(10deg) scale(.72) translateY(40px); }
@@ -308,6 +358,7 @@ footer span { color: #bdaaaa; font-family: 'Gochi Hand', cursive; margin-top: 13
   .signature { margin-left: 0; }
   .note-grid { grid-template-columns: 1fr 1fr; }
   .games-grid { grid-template-columns: 1fr; }
+  .angry-hero { grid-template-columns: 1fr; padding-top: 130px; text-align: center; }.fire-heart { height: 340px; }.healing-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 620px) {
   .section-pad { padding: 82px 20px; }
