@@ -177,9 +177,9 @@ blockquote { color: var(--color-berry); font-family: 'Gochi Hand', cursive; font
 .fortune-result span { color: #806d6d; font-size: 17px; line-height: 1.5; }
 .maze-board {
   background: var(--color-ink); border: 9px solid var(--color-ink); border-radius: 18px; display: grid;
-  gap: 3px; margin: 30px auto 22px; max-width: 360px; overflow: hidden; touch-action: none;
+  gap: 3px; margin: 30px auto 22px; max-width: 360px; overflow: hidden; touch-action: none; user-select: none;
 }
-.maze-cell { aspect-ratio: 1; border: 0; min-width: 0; padding: 0; position: relative; touch-action: none; }
+.maze-cell { aspect-ratio: 1; border: 0; min-width: 0; padding: 0; pointer-events: auto; position: relative; touch-action: none; user-select: none; }
 .maze-path { background: #f9dfe2; cursor: crosshair; }
 .maze-wall { background: #765f61; }
 .maze-path.snake-trail { background: var(--color-sage); }
@@ -278,6 +278,9 @@ footer span { color: #bdaaaa; font-family: 'Gochi Hand', cursive; margin-top: 13
   .gallery-controls button { font-size: 0; height: 46px; justify-content: center; padding: 0; width: 46px; }
   .gallery-controls button span { font-size: 20px; }
   .game-card { min-height: 560px; padding: 30px 20px; }
+  .maze-board { border-width: 6px; gap: 2px; max-width: min(100%, 340px); }
+  .maze-game { padding-left: 14px; padding-right: 14px; }
+  .snake-head { inset: 9%; }
   .garden { max-width: 100%; transform: scale(.9); }
   .envelope-row { gap: 9px; }
   .envelope { height: 82px; width: 92px; }

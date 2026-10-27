@@ -40,11 +40,11 @@ const fortunes = [
 ]
 
 const mazeLevels = [
-  { size: 4, path: [0, 1, 2, 6, 10, 9, 13, 14, 15] },
-  { size: 5, path: [0, 5, 10, 11, 6, 7, 8, 13, 18, 17, 22, 23, 24] },
-  { size: 6, path: [0, 1, 7, 13, 12, 18, 24, 25, 26, 20, 14, 15, 16, 22, 28, 29, 35] },
-  { size: 7, path: [0, 7, 14, 15, 8, 9, 10, 17, 24, 23, 30, 37, 38, 39, 32, 25, 26, 27, 34, 41, 48] },
-  { size: 8, path: [0, 1, 9, 17, 16, 24, 32, 33, 34, 26, 18, 19, 20, 28, 36, 44, 43, 51, 59, 60, 52, 53, 54, 46, 38, 39, 47, 55, 63] },
+  { size: 4, path: [0, 1, 2, 6, 10, 9, 13, 14, 15], branches: [[1, 5], [10, 11]] },
+  { size: 5, path: [0, 5, 10, 11, 6, 7, 8, 13, 18, 17, 22, 23, 24], branches: [[0, 1, 2], [8, 9, 4], [17, 16, 21]] },
+  { size: 6, path: [0, 1, 7, 13, 12, 18, 24, 25, 26, 20, 14, 15, 16, 22, 28, 29, 35], branches: [[1, 2, 3], [13, 19], [26, 27, 33], [16, 10, 11]] },
+  { size: 7, path: [0, 7, 14, 15, 8, 9, 10, 17, 24, 23, 30, 37, 38, 39, 32, 25, 26, 27, 34, 41, 48], branches: [[0, 1, 2], [15, 16], [10, 3, 4, 5], [23, 22, 21], [39, 40, 47], [27, 20, 13]] },
+  { size: 8, path: [0, 1, 9, 17, 16, 24, 32, 33, 34, 26, 18, 19, 20, 28, 36, 44, 43, 51, 59, 60, 52, 53, 54, 46, 38, 39, 47, 55, 63], branches: [[1, 2, 3], [17, 25], [34, 35, 27], [19, 11, 12, 13], [44, 45], [51, 50, 49, 57], [53, 61, 62], [38, 37]] },
 ]
 
 function Heart({ filled = true }: { filled?: boolean }) {
@@ -102,7 +102,7 @@ function App() {
   const [selectedPhoto, setSelectedPhoto] = useState<{ src: string; alt: string; caption: string } | null>(null)
   const [savedMessage, setSavedMessage] = useState('')
   const [mazeLevel, setMazeLevel] = useState(0)
-  const [mazeProgress, setMazeProgress] = useState(0)
+  const [mazeTrail, setMazeTrail] = useState<number[]>([mazeLevels[0].path[0]])
   const [pullingSnake, setPullingSnake] = useState(false)
   const [sitSeconds, setSitSeconds] = useState(0)
   const [characterEscaped, setCharacterEscaped] = useState(false)
@@ -223,13 +223,21 @@ function App() {
   }
 
   const visitMazeCell = (cell: number) => {
-    const path = mazeLevels[mazeLevel].path
-    if (cell === path[mazeProgress]) {
-      setMazeProgress((progress) => progress + 1)
-    } else if (cell !== path[Math.max(0, mazeProgress - 1)]) {
-      setMazeProgress(0)
-      setPullingSnake(false)
-    }
+    const level = mazeLevels[mazeLevel]
+    setMazeTrail((trail) => {
+      const current = trail[trail.length - 1]
+      if (cell === current) return trail
+      if (trail.length > 1 && cell === trail[trail.length - 2]) return trail.slice(0, -1)
+
+      const canMove = [level.path, ...level.branches].some((route) =>
+        route.some((routeCell, index) =>
+          index > 0
+          && ((routeCell === cell && route[index - 1] === current)
+            || (routeCell === current && route[index - 1] === cell))),
+      )
+      if (!canMove || trail.includes(cell)) return trail
+      return [...trail, cell]
+    })
   }
 
   const tapCharacter = () => {
@@ -497,40 +505,58 @@ function App() {
             <div
               className="maze-board"
               style={{ gridTemplateColumns: `repeat(${mazeLevels[mazeLevel].size}, 1fr)` }}
-              onPointerLeave={() => setPullingSnake(false)}
+              onPointerDown={(event) => {
+                const cell = document.elementFromPoint(event.clientX, event.clientY)
+                  ?.closest<HTMLElement>('[data-maze-cell]')
+                if (Number(cell?.dataset.mazeCell) !== mazeTrail[mazeTrail.length - 1]) return
+                event.preventDefault()
+                event.currentTarget.setPointerCapture(event.pointerId)
+                setPullingSnake(true)
+              }}
+              onPointerMove={(event) => {
+                if (!pullingSnake) return
+                event.preventDefault()
+                const cell = document.elementFromPoint(event.clientX, event.clientY)
+                  ?.closest<HTMLElement>('[data-maze-cell]')
+                if (cell?.dataset.mazeCell) visitMazeCell(Number(cell.dataset.mazeCell))
+              }}
+              onPointerUp={(event) => {
+                if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                  event.currentTarget.releasePointerCapture(event.pointerId)
+                }
+                setPullingSnake(false)
+              }}
+              onPointerCancel={() => setPullingSnake(false)}
             >
               {Array.from({ length: mazeLevels[mazeLevel].size ** 2 }).map((_, cell) => {
-                const pathIndex = mazeLevels[mazeLevel].path.indexOf(cell)
-                const complete = mazeProgress >= mazeLevels[mazeLevel].path.length
+                const level = mazeLevels[mazeLevel]
+                const openCells = new Set([level.path, ...level.branches].flat())
+                const isOpen = openCells.has(cell)
+                const isHead = cell === mazeTrail[mazeTrail.length - 1]
                 return (
                   <button
                     key={cell}
-                    className={`maze-cell ${pathIndex >= 0 ? 'maze-path' : 'maze-wall'} ${pathIndex < mazeProgress ? 'snake-trail' : ''}`}
-                    aria-label={pathIndex === 0 ? 'Start pulling snake' : pathIndex === mazeLevels[mazeLevel].path.length - 1 ? 'Maze finish' : 'Maze cell'}
-                    onPointerDown={() => {
-                      if (pathIndex === 0 && !complete) {
-                        setMazeProgress(1)
-                        setPullingSnake(true)
-                      }
-                    }}
-                    onPointerEnter={() => pullingSnake && visitMazeCell(cell)}
+                    data-maze-cell={cell}
+                    className={`maze-cell ${isOpen ? 'maze-path' : 'maze-wall'} ${mazeTrail.includes(cell) ? 'snake-trail' : ''}`}
+                    aria-label={isHead ? 'Snake head, drag from here' : cell === level.path[level.path.length - 1] ? 'Maze finish' : isOpen ? 'Open maze path' : 'Maze wall'}
+                    tabIndex={isHead ? 0 : -1}
                   >
-                    {pathIndex === 0 && mazeProgress === 0 && <span className="snake-head">●</span>}
-                    {pathIndex === mazeLevels[mazeLevel].path.length - 1 && <span className="maze-finish"><Heart /></span>}
+                    {isHead && <span className="snake-head">●</span>}
+                    {cell === level.path[level.path.length - 1] && <span className="maze-finish"><Heart /></span>}
                   </button>
                 )
               })}
             </div>
             <div className="maze-status" aria-live="polite">
-              {mazeProgress >= mazeLevels[mazeLevel].path.length ? (
+              {mazeTrail[mazeTrail.length - 1] === mazeLevels[mazeLevel].path.at(-1) ? (
                 <>
                   <strong>Made it home!</strong>
                   <button onClick={() => {
                     setMazeLevel((level) => (level + 1) % mazeLevels.length)
-                    setMazeProgress(0)
+                    setMazeTrail([mazeLevels[(mazeLevel + 1) % mazeLevels.length].path[0]])
                   }}>{mazeLevel === 4 ? 'Play from easy again' : 'Try the next level'}</button>
                 </>
-              ) : <span>{['Easy peasy', 'A little twisty', 'Getting clever', 'Nearly expert', 'Maze master'][mazeLevel]}</span>}
+              ) : <span>{['Easy peasy', 'A little twisty', 'Getting clever', 'Nearly expert', 'Maze master'][mazeLevel]} · You can backtrack from a dead end</span>}
             </div>
           </article>
 
